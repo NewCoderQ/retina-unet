@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from PIL import Image
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
 def load_hdf5(infile):
   with h5py.File(infile,"r") as f:  #"with" close the file after its nested commands
@@ -68,14 +68,15 @@ def masks_Unet(masks):
                 new_masks[i,j,1]=1
     return new_masks
 
-
-def pred_to_imgs(pred, patch_height, patch_width, mode="original"):
-    assert (len(pred.shape)==3)  #3D array: (Npatches,height*width,2)
-    assert (pred.shape[2]==2 )  #check the classes are 2
+def pred_to_imgs(pred, patch_height, patch_width, mode="original"):     # convert to the original image
+    # shape check
+    assert (len(pred.shape)==3)  #3D array: (Npatches,height*width,2)   
+    assert (pred.shape[2]==2 )  #check the classes are 2 
+    # (n_patches, height*width)
     pred_images = np.empty((pred.shape[0],pred.shape[1]))  #(Npatches,height*width)
     if mode=="original":
-        for i in range(pred.shape[0]):
-            for pix in range(pred.shape[1]):
+        for i in range(pred.shape[0]):              # height
+            for pix in range(pred.shape[1]):        # width
                 pred_images[i,pix]=pred[i,pix,1]
     elif mode=="threshold":
         for i in range(pred.shape[0]):
@@ -87,5 +88,27 @@ def pred_to_imgs(pred, patch_height, patch_width, mode="original"):
     else:
         print "mode " +str(mode) +" not recognized, it can be 'original' or 'threshold'"
         exit()
+
+    # reshape the otput image to the shape of (n_patches, 1, patch_height, patch_width)
     pred_images = np.reshape(pred_images,(pred_images.shape[0],1, patch_height, patch_width))
     return pred_images
+
+def save_image(image_arr, img_name_pref):
+    assert (len(image_arr.shape) == 4)      # shape check
+    N_full_image = image_arr.shape[0]       # number of full image
+    for i in range(N_full_image):           # for each full image
+        img_data = image_arr[i]
+        # check the number of channel
+        if img_data.shape[0] == 1:      # number of channel
+            img_data = np.reshape(img_data, (img_data.shape[1], img_data.shape[2]))     # reshape the image data
+
+        # set the pixel value
+        if np.max(img_data) > 1:            # range of pixel value is (0, 255)
+            img = Image.fromarray(img_data.astype(np.uint8))
+
+        else:
+            img = Image.fromarray((img_data * 255).astype(np.uint8))
+
+        img.save('./result_images/' + img_name_pref + '_' + str(i) + '.png')
+
+    print("Save " + img_name_pref + " images Done!")

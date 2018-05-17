@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###################################################
 #
 #   Script to execute the prediction
@@ -13,12 +14,15 @@ config = ConfigParser.RawConfigParser()
 config.readfp(open(r'./configuration.txt'))
 #===========================================
 #name of the experiment!!
-name_experiment = config.get('experiment name', 'name')
-nohup = config.getboolean('testing settings', 'nohup')   #std output on log file?
+name_experiment = config.get('experiment name', 'name')     # get the name of experiment
+nohup = config.getboolean('testing settings', 'nohup')   # std output on log file?, default is false
 
-run_GPU = '' if sys.platform == 'win32' else ' THEANO_FLAGS=device=gpu,floatX=float32 '
+# set the GPU operation
+# run_GPU = '' if sys.platform == 'win32' else ' THEANO_FLAGS=device=gpu,floatX=float32 '
+run_GPU = '' if sys.platform == 'win32' else 'CUDA_VISIBLE_DEVICES=1 '
 
-#create a folder for the results if not existing already
+# create the test folder according to the experiment name
+# create a folder for the results if not existing already
 result_dir = name_experiment
 print "\n1. Create directory for the results (if not already existing)"
 if os.path.exists(result_dir):
@@ -32,7 +36,7 @@ else:
 # finally run the prediction
 if nohup:
     print "\n2. Run the prediction on GPU  with nohup"
-    os.system(run_GPU +' nohup python -u ./src/retinaNN_predict.py > ' +'./'+name_experiment+'/'+name_experiment+'_prediction.nohup')
+    os.system(run_GPU +' nohup python2 -u ./src/retinaNN_predict.py > ' +'./'+name_experiment+'/'+name_experiment+'_prediction.nohup')
 else:
     print "\n2. Run the prediction on GPU (no nohup)"
-    os.system(run_GPU +' python ./src/retinaNN_predict.py')
+    os.system(run_GPU +' python2 ./src/retinaNN_predict.py')
